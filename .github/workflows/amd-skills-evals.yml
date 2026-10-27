@@ -1,0 +1,70 @@
+name: AMD Skills Checks
+
+# Grades the six rocprof-compute skills with the skillscope pipeline amd/skills
+# uses for hardware-gated skills (skill-evals.yml), not the single-runner
+# reusable.yml Magpie calls. Magpie's v0.1.3 tag is a floating ref; this pins
+# the commit that tag points at.
+#
+# Pull requests run structural checks for these skills only. Each skill's
+# evals/machine.yml asks for Linux plus mi300x, gpu, and rocm, so behavioral
+# cases are scoped: they run on self-hosted, Linux, X64 plus those labels, and
+# only when the pull request has the enable_mi_ci label. That job reads
+# credentials from the behavioral-instinct environment. A workflow_dispatch
+# can run routing or behavioral without the label.
+#
+# skills/rocprof-compute-sample is fixture content, not a skill. A full
+# checkout already includes it; the path filter below re-runs these checks
+# when those files change.
+
+on:
+  pull_request:
+    # `labeled` re-runs selection when enable_mi_ci is added. Re-running an
+    # existing run would keep the payload from before the label existed.
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - "skills/rocprof-compute-kernel-bottleneck/**"
+      - "skills/rocprof-compute-memory/**"
+      - "skills/rocprof-compute-pc-sampling/**"
+      - "skills/rocprof-compute-roofline/**"
+      - "skills/rocprof-compute-speed-of-light/**"
+      - "skills/rocprof-compute-torch-trace/**"
+      - "skills/rocprof-compute-sample/**"
+      - ".github/workflows/amd-skills-evals.yml"
+  workflow_dispatch:
+    inputs:
+      routing:
+        description: Routing Tests
+        type: boolean
+        default: false
+      behavioral:
+        description: Behavioral Tests
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  evals:
+    name: AMD Skills Checks
+    uses: amd/skillscope/.github/workflows/skill-evals.yml@0f734b2dd344cd72b5e016ad6c3b1ac2ce36f6f3
+    secrets: inherit
+    with:
+      skill_globs: skills/rocprof-compute-kernel-bottleneck,skills/rocprof-compute-memory,skills/rocprof-compute-pc-sampling,skills/rocprof-compute-roofline,skills/rocprof-compute-speed-of-light,skills/rocprof-compute-torch-trace
+      infra_paths: .github/workflows/amd-skills-evals.yml
+      skill_files: skill-card.md
+      skill_sections: Description,Owner,License
+      behavior_os: Linux
+      scoped_runner: '["self-hosted", "Linux", "X64"]'
+      scoped_gate: enable_mi_ci
+      scoped_environment: behavioral-instinct
+      # Several skills and a blank room is no routing run. Name them only when
+      # a dispatch asks for routing, so a pull request does not need a model key.
+      routing_room: ${{ github.event_name == 'workflow_dispatch' && inputs.routing && 'rocprof-compute-kernel-bottleneck,rocprof-compute-memory,rocprof-compute-pc-sampling,rocprof-compute-roofline,rocprof-compute-speed-of-light,rocprof-compute-torch-trace' || 'none' }}
+      # `both` on a pull request still holds scoped behavioral cases for the
+      # missing gate label. `references` is structural checks only.
+      mode: ${{ github.event_name != 'workflow_dispatch' && 'both' || inputs.routing && inputs.behavioral && 'both' || inputs.routing && 'routing' || inputs.behavioral && 'behavioral' || 'references' }}
+      extended: false
+      min_accuracy: "0"
+      api_key_secret: ANTHROPIC_API_KEY
+      scoped_api_key_secret: ANTHROPIC_API_KEY
