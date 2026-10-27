@@ -95,10 +95,35 @@
       "repo": "ROCm/rocm-systems",
       "branch": "develop",
       "license": "MIT",
+      "fixtures": [
+        {
+          "path": "projects/rocprofiler-compute/sample",
+          "as": "rocprof-compute-sample",
+          "workspace_prefix": "../../sample"
+        }
+      ],
       "skills": [
         {
           "path": "projects/rocprofiler-sdk/skills/pc-sampling",
           "as": "rocprofiler-pc-sampling"
+        },
+        {
+          "path": "projects/rocprofiler-compute/skills/rocprof-compute-kernel-bottleneck"
+        },
+        {
+          "path": "projects/rocprofiler-compute/skills/rocprof-compute-memory"
+        },
+        {
+          "path": "projects/rocprofiler-compute/skills/rocprof-compute-pc-sampling"
+        },
+        {
+          "path": "projects/rocprofiler-compute/skills/rocprof-compute-roofline"
+        },
+        {
+          "path": "projects/rocprofiler-compute/skills/rocprof-compute-speed-of-light"
+        },
+        {
+          "path": "projects/rocprofiler-compute/skills/rocprof-compute-torch-trace"
         }
       ]
     }
